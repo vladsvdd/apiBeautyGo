@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <!-- Create table 'users_link_roles' -->
+    <changeSet id="4" author="neo">
+        <createTable tableName="users_link_roles">
+            <!-- Уникальный идентификатор -->
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <!-- Ссылка на идентификатор пользователя -->
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <!-- Ссылка на идентификатор роли пользователя -->
+            <column name="role_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <!-- Дата и время создания записи -->
+            <column name="created_at" type="TIMESTAMP"/>
+            <!-- Дата и время последнего обновления записи -->
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+
+        <!-- Добавление внешних ключей для user_id и role_id -->
+        <addForeignKeyConstraint baseTableName="users_link_roles" baseColumnNames="user_id"
+                                 referencedTableName="users" referencedColumnNames="id"
+                                 constraintName="fk_users_TO_users_link_roles"/>
+
+        <addForeignKeyConstraint baseTableName="users_link_roles" baseColumnNames="role_id"
+                                 referencedTableName="users_roles" referencedColumnNames="id"
+                                 constraintName="fk_users_roles_TO_users_link_roles"/>
+        <sql splitStatements="true">
+            ALTER TABLE users_link_roles
+            ALTER COLUMN created_at SET DEFAULT NOW(),
+            ALTER COLUMN updated_at SET DEFAULT NOW();
+
+            CREATE TRIGGER set_timestamp
+            BEFORE
+            UPDATE ON users_link_roles
+            FOR EACH ROW
+            EXECUTE PROCEDURE trigger_set_timestamp();
+
+            CREATE INDEX idx_users_link_roles__user_id ON users_link_roles (user_id);
+            CREATE INDEX idx_users_link_roles__role_id ON users_link_roles (role_id);
+        </sql>
+
+        <!-- Откат создания таблицы. -->
+        <rollback>
+            <dropTable tableName="users_link_roles"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

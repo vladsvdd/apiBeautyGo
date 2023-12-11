@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <!-- Create table 'users' -->
+    <changeSet id="3" author="neo">
+        <createTable tableName="users">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+                <!-- Уникальный идентификатор пользователя -->
+            </column>
+            <column name="firstname" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="lastname" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="surname" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="password_hash" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+                <!-- Хэш пароля, шифрование -->
+            </column>
+            <column name="email" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true"/>
+                <!-- Эл. почта (уникальное поле) -->
+            </column>
+            <column name="time_zone" type="VARCHAR(20)">
+                <constraints nullable="true"/>
+                <!-- Временная зона мастера -->
+            </column>
+            <column name="time_work_start" type="TIME">
+                <constraints nullable="true"/>
+                <!-- Начало рабочего дня -->
+            </column>
+            <column name="time_work_end" type="TIME">
+                <constraints nullable="true"/>
+                <!-- Конец рабочего дня -->
+            </column>
+            <column name="service_time" type="TIME">
+                <constraints nullable="true"/>
+                <!-- Затраченное время на 1 услугу -->
+            </column>
+            <column name="dinner_time" type="TIME">
+                <constraints nullable="true"/>
+                <!-- Время начала обеда -->
+            </column>
+            <!-- код страны -->
+            <column name="phone_country_code" type="VARCHAR(5)">
+                <constraints nullable="false"/>
+            </column>
+            <!-- номер телефона -->
+            <column name="phone_number" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP"/>
+            <!-- Дата и время создания записи -->
+            <column name="updated_at" type="TIMESTAMP"/>
+            <!-- Дата и время последнего обновления записи -->
+        </createTable>
+
+        <addUniqueConstraint tableName="users" columnNames="phone_country_code, phone_number"
+                             constraintName="unique_user_phone_number"/>
+
+        <sql splitStatements="true">
+            ALTER TABLE users
+            ALTER COLUMN created_at SET DEFAULT NOW(),
+            ALTER COLUMN updated_at SET DEFAULT NOW();
+
+            CREATE TRIGGER set_timestamp
+            BEFORE
+            UPDATE ON users
+            FOR EACH ROW
+            EXECUTE PROCEDURE trigger_set_timestamp();
+
+            CREATE INDEX idx_users__phone_country_and_number ON users (phone_country_code, phone_number);
+        </sql>
+
+        <!-- Откат создания таблицы. -->
+        <rollback>
+            <dropTable tableName="users"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
